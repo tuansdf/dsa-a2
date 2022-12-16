@@ -81,6 +81,7 @@ public class Maze {
         cols = 100;
         map = new String[rows];
 
+        // read maze from file
         int index = 0;
         try {
             File file = new File("./resources/maze.txt");
@@ -92,13 +93,15 @@ public class Maze {
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-
         }
+
 //        map[0] = "...............";
 //        map[1] = ".        .    .";
 //        map[2] = ".  X     .    .";
 //        map[3] = ".             .";
 //        map[4] = "...............";
+
+        // robot position
         robotRow = 2;
         robotCol = 1;
         steps = 0;
@@ -181,7 +184,7 @@ class Branch {
 // Stack branches for DFS
 // - A stack contains branch node
 // - Each node contains a stack of cell leading to that node (for back-tracking)
-// The virtual map size for the robot is 1998x1998
+// The virtual map size for the robot is 1997x1997
 class Robot {
 
     static final int VIRTUAL_MAP_ONE_SIDE = 998;
@@ -194,7 +197,8 @@ class Robot {
     private Maze maze;
     private String currentResult;
     private String currentDirection;
-private LinkedListStack<Position> history;
+
+    private LinkedListStack<Position> history;
 
     public Robot() {
         // initialize the virtual map for robot
@@ -210,7 +214,7 @@ private LinkedListStack<Position> history;
         virtualCurrentRow = VIRTUAL_MAP_ONE_SIDE;
         history = new LinkedListStack<>();
 
-        replaceCellAt(virtualCurrentRow, virtualCurrentCol, '*');
+        replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'R');
 
         maze = new Maze();
 
@@ -245,8 +249,7 @@ private LinkedListStack<Position> history;
                             backtrack(currentBranch);
                             branches.pop();
                             currentBranch = branches.peek();
-                        }
-                        else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
+                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
                             branches.pop();
                             currentBranch = branches.peek();
                         } else {
@@ -270,8 +273,7 @@ private LinkedListStack<Position> history;
                             backtrack(currentBranch);
                             branches.pop();
                             currentBranch = branches.peek();
-                        }
-                        else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
+                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
                             branches.pop();
                             currentBranch = branches.peek();
                         } else {
@@ -295,8 +297,7 @@ private LinkedListStack<Position> history;
                             backtrack(currentBranch);
                             branches.pop();
                             currentBranch = branches.peek();
-                        }
-                        else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
+                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
                             branches.pop();
                             currentBranch = branches.peek();
                         } else {
@@ -320,8 +321,7 @@ private LinkedListStack<Position> history;
                             backtrack(currentBranch);
                             branches.pop();
                             currentBranch = branches.peek();
-                        }
-                        else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
+                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
                             branches.pop();
                             currentBranch = branches.peek();
                         } else {
@@ -344,12 +344,12 @@ private LinkedListStack<Position> history;
         }
     }
 
-   private void backtrack(Branch b) {
+    private void backtrack(Branch b) {
         String direction = getOppositeDirection(b.direction);
         for (int i = 0; i < b.steps; i++) {
             adapterGo(direction);
         }
-   }
+    }
 
     private void replaceCellAt(int row, int col, char newChar) {
         StringBuilder sb = new StringBuilder(virtualMap[row]);
