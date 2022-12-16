@@ -85,6 +85,16 @@ public class Robot {
                     }
                 }
             } else {
+                switch (currentDirection) {
+                    case "UP", "DOWN" -> {
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
+                    }
+                    case "RIGHT", "LEFT" -> {
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
+                    }
+                }
                 currentBranch.steps++;
             }
         }

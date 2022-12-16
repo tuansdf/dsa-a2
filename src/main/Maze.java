@@ -83,7 +83,12 @@ public class Maze {
     }
 
     public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+
         (new Robot()).navigate();
+
+        long end = System.currentTimeMillis();
+        System.out.println(end - start);
     }
 }
 
