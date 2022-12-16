@@ -6,14 +6,24 @@ import java.util.Arrays;
 // - Default: Up
 // - Horizontal: Right then Left
 // - Vertical: Up then Down
-// Stack branches for DFS
-// - A stack contains branch node
-// - Each node contains a stack of cell leading to that node (for back-tracking)
 // The virtual map size for the robot is 1997x1997
 public class Robot {
 
     private static final int VIRTUAL_MAP_ONE_SIDE = 998;
     private static final int VIRTUAL_MAP_SIZE = VIRTUAL_MAP_ONE_SIDE * 2 + 1;
+
+    private static final String UP = "UP";
+    private static final String DOWN = "DOWN";
+    private static final String LEFT = "LEFT";
+    private static final String RIGHT = "RIGHT";
+
+    private static final String TRUE_SIGNAL = "true";
+    private static final String FALSE_SIGNAL = "false";
+    private static final String WIN_SIGNAL = "win";
+
+    private static final char EMPTY_CELL = ' ';
+    private static final char PATH_CELL = '*';
+    private static final char WALL_CELL = '.';
 
     private final String[] virtualMap;
     private int virtualCurrentCol;
@@ -24,17 +34,18 @@ public class Robot {
     public Robot() {
         // initialize the virtual map for robot
         char[] row = new char[VIRTUAL_MAP_SIZE];
-        Arrays.fill(row, ' ');
+        Arrays.fill(row, EMPTY_CELL);
         String rowString = new String(row);
         virtualMap = new String[VIRTUAL_MAP_SIZE];
         Arrays.fill(virtualMap, rowString);
 
         // assume the robot is in the position (0, 0) in its virtual map,
-        // so index 0 + the length of one half to put it in the center of the 2d array
+        // so index 0 + the length of one half to put it at the center of the 2d array
         virtualCurrentCol = VIRTUAL_MAP_ONE_SIDE;
         virtualCurrentRow = VIRTUAL_MAP_ONE_SIDE;
 
-        replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'R');
+        // mark the starting point
+        replaceCellAt(virtualCurrentRow, virtualCurrentCol, PATH_CELL);
 
         maze = new Maze();
     }
@@ -43,16 +54,16 @@ public class Robot {
         LinkedListStack<Branch> branches = new LinkedListStack<>();
 
         // register all four directions for back-tracking
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
+        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
+        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
+        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
+        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
 
         Branch currentBranch;
         String currentDirection;
         String currentResult = "";
 
-        while (!currentResult.equals("win")) {
+        while (!currentResult.equals(WIN_SIGNAL)) {
             currentBranch = branches.peek();
             if (currentBranch == null) {
                 break;
@@ -61,38 +72,51 @@ public class Robot {
 
             System.out.println(currentDirection);
 
+            // check the next cell and consider own path as obstacle
             currentResult = virtualCheck(currentDirection, false);
-            if (currentResult.equals("true")) {
+            // only when the virtual map does not have record of such obstacle,
+            // advance to the next cell
+            if (currentResult.equals(TRUE_SIGNAL)) {
                 currentResult = adapterGo(currentDirection);
             }
-            if (currentResult.equals("false")) {
+            // if it can not go to the next cell in the real map:
+            if (currentResult.equals(FALSE_SIGNAL)) {
+                // if the current branch already branched out earlier,
+                // back-track to the root and terminate that branch
                 if (currentBranch.isEnd()) {
                     backtrack(currentBranch);
                     branches.pop();
-                } else if (currentBranch.getPos().getCol() == virtualCurrentCol && currentBranch.getPos().getRow() == virtualCurrentRow) {
+                }
+                // if the current position is the root of a branch,
+                // and cannot go further, terminate that branch
+                else if (currentBranch.getPos().getCol() == virtualCurrentCol && currentBranch.getPos().getRow() == virtualCurrentRow) {
                     branches.pop();
-                } else {
+                }
+                // the branch just hits the wall, so split into 2 branches
+                else {
                     currentBranch.setEnd(true);
                     switch (currentDirection) {
-                        case "UP", "DOWN" -> {
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
+                        case UP, DOWN -> {
+                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
+                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
                         }
-                        case "RIGHT", "LEFT" -> {
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
+                        case RIGHT, LEFT -> {
+                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
+                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
                         }
                     }
                 }
-            } else {
+            }
+            // if it can actually go to the next cell in the real map:
+            else {
                 switch (currentDirection) {
-                    case "UP", "DOWN" -> {
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
+                    case UP, DOWN -> {
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
                     }
-                    case "RIGHT", "LEFT" -> {
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
+                    case RIGHT, LEFT -> {
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
+                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
                     }
                 }
                 currentBranch.setSteps(currentBranch.getSteps() + 1);
@@ -100,7 +124,7 @@ public class Robot {
         }
 
         // for testing only
-        if (currentResult.equals("win")) {
+        if (currentResult.equals(WIN_SIGNAL)) {
             replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
         }
         System.out.println(maze.steps);
@@ -125,16 +149,20 @@ public class Robot {
     // run both go at the same time
     private String adapterGo(String direction) {
         String result = maze.go(direction);
-        if (result.equals("false")) {
-            // mark the cell as wall
+
+        if (result.equals(FALSE_SIGNAL)) {
+            // prepare to mark wall in virtual map
             String virtualResult = virtualGo(direction);
-            if (virtualResult.equals("true")) {
-                replaceCellAt(virtualCurrentRow, virtualCurrentCol, '.');
+            if (virtualResult.equals(TRUE_SIGNAL)) {
+                // mark wall
+                replaceCellAt(virtualCurrentRow, virtualCurrentCol, WALL_CELL);
+                // go back to the original place
                 virtualGo(getOppositeDirection(direction));
             }
         } else {
+            // move in virtual map and mark path
             virtualGo(direction);
-            replaceCellAt(virtualCurrentRow, virtualCurrentCol, '*');
+            replaceCellAt(virtualCurrentRow, virtualCurrentCol, PATH_CELL);
         }
 
         return result;
@@ -142,17 +170,17 @@ public class Robot {
 
     private String getOppositeDirection(String direction) {
         switch (direction) {
-            case "UP" -> {
-                return "DOWN";
+            case UP -> {
+                return DOWN;
             }
-            case "DOWN" -> {
-                return "UP";
+            case DOWN -> {
+                return UP;
             }
-            case "LEFT" -> {
-                return "RIGHT";
+            case LEFT -> {
+                return RIGHT;
             }
-            case "RIGHT" -> {
-                return "LEFT";
+            case RIGHT -> {
+                return LEFT;
             }
             default -> {
                 return "";
@@ -163,18 +191,18 @@ public class Robot {
     // maze.go() but for virtual map only
     private String virtualGo(String direction) {
         String result = virtualCheck(direction, true);
-        if (result.equals("true")) {
+        if (result.equals(TRUE_SIGNAL)) {
             switch (direction) {
-                case "UP" -> {
+                case UP -> {
                     virtualCurrentRow--;
                 }
-                case "DOWN" -> {
+                case DOWN -> {
                     virtualCurrentRow++;
                 }
-                case "LEFT" -> {
+                case LEFT -> {
                     virtualCurrentCol--;
                 }
-                case "RIGHT" -> {
+                case RIGHT -> {
                     virtualCurrentCol++;
                 }
             }
@@ -184,39 +212,39 @@ public class Robot {
 
     // mirror of maze.go() for easy checking surrounding on virtual map
     private String virtualCheck(String direction, boolean isOverride) {
-        if (!direction.equals("UP") && !direction.equals("DOWN") && !direction.equals("LEFT") && !direction.equals("RIGHT")) {
+        if (!direction.equals(UP) && !direction.equals(DOWN) && !direction.equals(LEFT) && !direction.equals(RIGHT)) {
             // invalid direction
-            return "false";
+            return FALSE_SIGNAL;
         }
 
         int currentRow = virtualCurrentRow;
         int currentCol = virtualCurrentCol;
 
         switch (direction) {
-            case "UP" -> {
+            case UP -> {
                 currentRow--;
             }
-            case "DOWN" -> {
+            case DOWN -> {
                 currentRow++;
             }
-            case "LEFT" -> {
+            case LEFT -> {
                 currentCol--;
             }
-            case "RIGHT" -> {
+            case RIGHT -> {
                 currentCol++;
             }
         }
 
         switch (virtualMap[currentRow].charAt(currentCol)) {
-            case '.' -> {
-                return "false";
+            case WALL_CELL -> {
+                return FALSE_SIGNAL;
             }
-            case '*' -> {
-                if (isOverride) return "true";
-                return "false";
+            case PATH_CELL -> {
+                if (isOverride) return TRUE_SIGNAL;
+                return FALSE_SIGNAL;
             }
             default -> {
-                return "true";
+                return TRUE_SIGNAL;
             }
         }
     }
