@@ -12,8 +12,8 @@ import java.util.Arrays;
 // The virtual map size for the robot is 1997x1997
 public class Robot {
 
-    static final int VIRTUAL_MAP_ONE_SIDE = 998;
-    static final int VIRTUAL_MAP_SIZE = VIRTUAL_MAP_ONE_SIDE * 2 + 1;
+    private static final int VIRTUAL_MAP_ONE_SIDE = 998;
+    private static final int VIRTUAL_MAP_SIZE = VIRTUAL_MAP_ONE_SIDE * 2 + 1;
 
     private final String[] virtualMap;
     private int virtualCurrentCol;
@@ -57,7 +57,7 @@ public class Robot {
             if (currentBranch == null) {
                 break;
             }
-            currentDirection = currentBranch.direction;
+            currentDirection = currentBranch.getDirection();
 
             System.out.println(currentDirection);
 
@@ -66,13 +66,13 @@ public class Robot {
                 currentResult = adapterGo(currentDirection);
             }
             if (currentResult.equals("false")) {
-                if (currentBranch.end) {
+                if (currentBranch.isEnd()) {
                     backtrack(currentBranch);
                     branches.pop();
-                } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
+                } else if (currentBranch.getPos().getCol() == virtualCurrentCol && currentBranch.getPos().getRow() == virtualCurrentRow) {
                     branches.pop();
                 } else {
-                    currentBranch.end = true;
+                    currentBranch.setEnd(true);
                     switch (currentDirection) {
                         case "UP", "DOWN" -> {
                             branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
@@ -95,7 +95,7 @@ public class Robot {
                         branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
                     }
                 }
-                currentBranch.steps++;
+                currentBranch.setSteps(currentBranch.getSteps() + 1);
             }
         }
 
@@ -110,8 +110,8 @@ public class Robot {
     }
 
     private void backtrack(Branch b) {
-        String direction = getOppositeDirection(b.direction);
-        for (int i = 0; i < b.steps; i++) {
+        String direction = getOppositeDirection(b.getDirection());
+        for (int i = 0; i < b.getSteps(); i++) {
             adapterGo(direction);
         }
     }
