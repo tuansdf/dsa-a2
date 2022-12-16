@@ -15,15 +15,11 @@ public class Robot {
     static final int VIRTUAL_MAP_ONE_SIDE = 998;
     static final int VIRTUAL_MAP_SIZE = VIRTUAL_MAP_ONE_SIDE * 2 + 1;
 
-    private String[] virtualMap;
+    private final String[] virtualMap;
     private int virtualCurrentCol;
     private int virtualCurrentRow;
 
-    private Maze maze;
-    private String currentResult;
-    private String currentDirection;
-
-    private LinkedListStack<Position> history;
+    private final Maze maze;
 
     public Robot() {
         // initialize the virtual map for robot
@@ -37,132 +33,65 @@ public class Robot {
         // so index 0 + the length of one half to put it in the center of the 2d array
         virtualCurrentCol = VIRTUAL_MAP_ONE_SIDE;
         virtualCurrentRow = VIRTUAL_MAP_ONE_SIDE;
-        history = new LinkedListStack<>();
 
         replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'R');
 
         maze = new Maze();
-
-        currentResult = "";
-        currentDirection = "";
     }
 
     public void navigate() {
         LinkedListStack<Branch> branches = new LinkedListStack<>();
 
+        // register all four directions for back-tracking
         branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
         branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
         branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
         branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
 
-        Branch currentBranch = branches.peek();
+        Branch currentBranch;
+        String currentDirection;
+        String currentResult = "";
 
         while (!currentResult.equals("win")) {
-            currentResult = "";
+            currentBranch = branches.peek();
             if (currentBranch == null) {
                 break;
             }
-            switch (currentBranch.direction) {
-                case "DOWN" -> {
-                    System.out.println("DOWN");
-                    currentResult = virtualCheck("DOWN", false);
-                    if (currentResult.equals("true")) {
-                        currentResult = adapterGo("DOWN");
-                    }
-                    if (currentResult.equals("false")) {
-                        if (currentBranch.end) {
-                            backtrack(currentBranch);
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else {
-                            currentBranch.end = true;
+            currentDirection = currentBranch.direction;
+
+            System.out.println(currentDirection);
+
+            currentResult = virtualCheck(currentDirection, false);
+            if (currentResult.equals("true")) {
+                currentResult = adapterGo(currentDirection);
+            }
+            if (currentResult.equals("false")) {
+                if (currentBranch.end) {
+                    backtrack(currentBranch);
+                    branches.pop();
+                } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
+                    branches.pop();
+                } else {
+                    currentBranch.end = true;
+                    switch (currentDirection) {
+                        case "UP", "DOWN" -> {
                             branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
                             branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
-                            currentBranch = branches.peek();
                         }
-                    } else {
-                        currentBranch.steps++;
-                    }
-                }
-                case "LEFT" -> {
-                    System.out.println("LEFT");
-                    currentResult = virtualCheck("LEFT", false);
-                    if (currentResult.equals("true")) {
-                        currentResult = adapterGo("LEFT");
-                    }
-                    if (currentResult.equals("false")) {
-                        if (currentBranch.end) {
-                            backtrack(currentBranch);
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else {
-                            currentBranch.end = true;
+                        case "RIGHT", "LEFT" -> {
                             branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
                             branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
-                            currentBranch = branches.peek();
                         }
-                    } else {
-                        currentBranch.steps++;
                     }
                 }
-                case "RIGHT" -> {
-                    System.out.println("RIGHT");
-                    currentResult = virtualCheck("RIGHT", false);
-                    if (currentResult.equals("true")) {
-                        currentResult = adapterGo("RIGHT");
-                    }
-                    if (currentResult.equals("false")) {
-                        if (currentBranch.end) {
-                            backtrack(currentBranch);
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else {
-                            currentBranch.end = true;
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "UP"));
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "DOWN"));
-                            currentBranch = branches.peek();
-                        }
-                    } else {
-                        currentBranch.steps++;
-                    }
-                }
-                default -> {
-                    System.out.println("UP");
-                    currentResult = virtualCheck("UP", false);
-                    if (currentResult.equals("true")) {
-                        currentResult = adapterGo("UP");
-                    }
-                    if (currentResult.equals("false")) {
-                        if (currentBranch.end) {
-                            backtrack(currentBranch);
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else if (currentBranch.pos.col == virtualCurrentCol && currentBranch.pos.row == virtualCurrentRow) {
-                            branches.pop();
-                            currentBranch = branches.peek();
-                        } else {
-                            currentBranch.end = true;
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "RIGHT"));
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), "LEFT"));
-                            currentBranch = branches.peek();
-                        }
-                    } else {
-                        currentBranch.steps++;
-                    }
-                }
+            } else {
+                currentBranch.steps++;
             }
-            if (currentResult.equals("win")) {
-                replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'X');
-            }
+        }
+
+        // for testing only
+        if (currentResult.equals("win")) {
+            replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
         }
         System.out.println(maze.steps);
         for (int i = VIRTUAL_MAP_ONE_SIDE - 50; i < VIRTUAL_MAP_SIZE - VIRTUAL_MAP_ONE_SIDE + 50; i++) {
