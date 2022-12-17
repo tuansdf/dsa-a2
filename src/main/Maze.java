@@ -15,14 +15,14 @@ public class Maze {
     public Maze() {
         // Note: in my real test, I will create much larger
         // and more complicated map
-        rows = 30;
-        cols = 100;
+        rows = 1000;
+        cols = 1000;
         map = new String[rows];
 
         // read maze from file
         int index = 0;
         try {
-            File file = new File("./resources/maze.txt");
+            File file = new File("./resources/maze-1000x1000.txt");
             Scanner reader = new Scanner(file);
             while (reader.hasNextLine()) {
                 String data = reader.nextLine();
@@ -41,7 +41,7 @@ public class Maze {
 
         // robot position
         robotRow = 2;
-        robotCol = 1;
+        robotCol = 2;
         steps = 0;
     }
 
@@ -83,12 +83,9 @@ public class Maze {
     }
 
     public static void main(String[] args) {
-        long start = System.currentTimeMillis();
 
         (new Robot()).navigate();
 
-        long end = System.currentTimeMillis();
-        System.out.println(end - start);
     }
 }
 

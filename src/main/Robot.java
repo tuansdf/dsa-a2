@@ -1,5 +1,6 @@
 package main;
 
+import java.io.FileWriter;
 import java.util.Arrays;
 
 // Decision choosing branch for DFS:
@@ -51,12 +52,11 @@ public class Robot {
     }
 
     public void navigate() {
+        long start = System.currentTimeMillis();
+
         LinkedListStack<Branch> branches = new LinkedListStack<>();
 
         // register all four directions for back-tracking
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
         branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
 
         Branch currentBranch;
@@ -69,8 +69,6 @@ public class Robot {
                 break;
             }
             currentDirection = currentBranch.getDirection();
-
-            System.out.println(currentDirection);
 
             // check the next cell and consider own path as obstacle
             currentResult = virtualCheck(currentDirection, false);
@@ -95,41 +93,51 @@ public class Robot {
                 // the branch just hits the wall, so split into 2 branches
                 else {
                     currentBranch.setEnd(true);
-                    switch (currentDirection) {
-                        case UP, DOWN -> {
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
-                        }
-                        case RIGHT, LEFT -> {
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
-                            branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
-                        }
-                    }
+                    splitBranch(branches, currentDirection);
                 }
             }
             // if it can actually go to the next cell in the real map:
             else {
-                switch (currentDirection) {
-                    case UP, DOWN -> {
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
-                    }
-                    case RIGHT, LEFT -> {
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
-                        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
-                    }
-                }
+                splitBranch(branches, currentDirection);
                 currentBranch.setSteps(currentBranch.getSteps() + 1);
             }
         }
 
-        // for testing only
+        // stats for testing only
+        // time taken
+        long end = System.currentTimeMillis();
+        System.out.println("Time in millis: " + (end - start));
+
+        // TODO: HELLO MYSELF, REMEMBER TO REMOVE THIS
+        System.out.println("Steps: " + maze.steps);
+
+        // make the gate in the map
         if (currentResult.equals(WIN_SIGNAL)) {
             replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
         }
-        System.out.println(maze.steps);
-        for (int i = VIRTUAL_MAP_ONE_SIDE - 50; i < VIRTUAL_MAP_SIZE - VIRTUAL_MAP_ONE_SIDE + 50; i++) {
-            System.out.println(virtualMap[i]);
+
+        // write the map into a separate file
+        try {
+            FileWriter fw = new FileWriter("./resources/virtual-maze.txt");
+            for (int i = 0; i < VIRTUAL_MAP_SIZE; i++) {
+                fw.write(virtualMap[i] + "\n");
+            }
+            fw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void splitBranch(LinkedListStack<Branch> branches, String currentDirection) {
+        switch (currentDirection) {
+            case UP, DOWN -> {
+                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
+                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
+            }
+            case RIGHT, LEFT -> {
+                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
+                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
+            }
         }
     }
 
