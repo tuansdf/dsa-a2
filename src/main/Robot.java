@@ -98,7 +98,16 @@ public class Robot {
             // and then create 2 new branches
             else {
                 currentBranch.setEnd(true);
-                splitBranch(branches, currentDirection);
+                switch (currentDirection) {
+                    case UP, DOWN -> {
+                        branches.push(new Branch(LEFT));
+                        branches.push(new Branch(RIGHT));
+                    }
+                    case RIGHT, LEFT -> {
+                        branches.push(new Branch(DOWN));
+                        branches.push(new Branch(UP));
+                    }
+                }
             }
         }
 
@@ -108,11 +117,9 @@ public class Robot {
         long end = System.currentTimeMillis();
         System.out.println("Time in millis: " + (end - start));
 
-        // TODO: HELLO MYSELF, REMEMBER TO REMOVE THIS
-        System.out.println("Steps: " + maze.steps);
-
-        // make the gate in the map
+        // mark the robot
         replaceCellAt(VIRTUAL_MAP_ONE_SIDE, VIRTUAL_MAP_ONE_SIDE, 'R');
+        // mark the gate
         if (currentResult.equals(WIN_SIGNAL)) {
             replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
         }
@@ -126,19 +133,6 @@ public class Robot {
             fw.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private void splitBranch(LinkedListStack<Branch> branches, String currentDirection) {
-        switch (currentDirection) {
-            case UP, DOWN -> {
-                branches.push(new Branch(LEFT));
-                branches.push(new Branch(RIGHT));
-            }
-            case RIGHT, LEFT -> {
-                branches.push(new Branch(DOWN));
-                branches.push(new Branch(UP));
-            }
         }
     }
 
