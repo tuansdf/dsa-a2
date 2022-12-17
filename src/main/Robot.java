@@ -56,8 +56,11 @@ public class Robot {
 
         LinkedListStack<Branch> branches = new LinkedListStack<>();
 
-        // register all four directions for back-tracking
-        branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
+        // register all four directions into the wait-list
+        branches.push(new Branch(LEFT));
+        branches.push(new Branch(RIGHT));
+        branches.push(new Branch(DOWN));
+        branches.push(new Branch(UP));
 
         Branch currentBranch;
         String currentDirection;
@@ -70,6 +73,15 @@ public class Robot {
             }
             currentDirection = currentBranch.getDirection();
 
+            // if the current branch already branched out earlier,
+            // back-track to the previous branch and terminate the current branch
+            if (currentBranch.isEnd()) {
+                // backtrack to the previous branch
+                adapterGo(getOppositeDirection(currentDirection));
+                branches.pop();
+                continue;
+            }
+
             // check the next cell and consider own path as obstacle
             currentResult = virtualCheck(currentDirection, false);
             // only when the virtual map does not have record of such obstacle,
@@ -77,32 +89,20 @@ public class Robot {
             if (currentResult.equals(TRUE_SIGNAL)) {
                 currentResult = adapterGo(currentDirection);
             }
-            // if it can not go to the next cell in the real map:
+
+            // if there is an obstacle, remove that branch
             if (currentResult.equals(FALSE_SIGNAL)) {
-                // if the current branch already branched out earlier,
-                // back-track to the root and terminate that branch
-                if (currentBranch.isEnd()) {
-                    backtrack(currentBranch);
-                    branches.pop();
-                }
-                // if the current position is the root of a branch,
-                // and cannot go further, terminate that branch
-                else if (currentBranch.getPos().getCol() == virtualCurrentCol && currentBranch.getPos().getRow() == virtualCurrentRow) {
-                    branches.pop();
-                }
-                // the branch just hits the wall, so split into 2 branches
-                else {
-                    currentBranch.setEnd(true);
-                    splitBranch(branches, currentDirection);
-                }
+                branches.pop();
             }
-            // if it can actually go to the next cell in the real map:
+            // if there is no obstacle, end that branch,
+            // and then create 2 new branches
             else {
+                currentBranch.setEnd(true);
                 splitBranch(branches, currentDirection);
-                currentBranch.setSteps(currentBranch.getSteps() + 1);
             }
         }
 
+        // * --- *
         // stats for testing only
         // time taken
         long end = System.currentTimeMillis();
@@ -112,6 +112,7 @@ public class Robot {
         System.out.println("Steps: " + maze.steps);
 
         // make the gate in the map
+        replaceCellAt(VIRTUAL_MAP_ONE_SIDE, VIRTUAL_MAP_ONE_SIDE, 'R');
         if (currentResult.equals(WIN_SIGNAL)) {
             replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
         }
@@ -131,20 +132,13 @@ public class Robot {
     private void splitBranch(LinkedListStack<Branch> branches, String currentDirection) {
         switch (currentDirection) {
             case UP, DOWN -> {
-                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), LEFT));
-                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), RIGHT));
+                branches.push(new Branch(LEFT));
+                branches.push(new Branch(RIGHT));
             }
             case RIGHT, LEFT -> {
-                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), DOWN));
-                branches.push(new Branch(new Position(virtualCurrentRow, virtualCurrentCol), UP));
+                branches.push(new Branch(DOWN));
+                branches.push(new Branch(UP));
             }
-        }
-    }
-
-    private void backtrack(Branch b) {
-        String direction = getOppositeDirection(b.getDirection());
-        for (int i = 0; i < b.getSteps(); i++) {
-            adapterGo(direction);
         }
     }
 
@@ -247,12 +241,12 @@ public class Robot {
             case WALL_CELL -> {
                 return FALSE_SIGNAL;
             }
-            case PATH_CELL -> {
-                if (isOverride) return TRUE_SIGNAL;
-                return FALSE_SIGNAL;
+            case EMPTY_CELL -> {
+                return TRUE_SIGNAL;
             }
             default -> {
-                return TRUE_SIGNAL;
+                if (isOverride) return TRUE_SIGNAL;
+                return FALSE_SIGNAL;
             }
         }
     }

@@ -22,7 +22,7 @@ public class Maze {
         // read maze from file
         int index = 0;
         try {
-            File file = new File("./resources/maze-1000x1000.txt");
+            File file = new File("./resources/maze-30x100.txt");
             Scanner reader = new Scanner(file);
             while (reader.hasNextLine()) {
                 String data = reader.nextLine();
@@ -40,8 +40,8 @@ public class Maze {
 //        map[4] = "...............";
 
         // robot position
-        robotRow = 2;
-        robotCol = 2;
+        robotRow = 10;
+        robotCol = 10;
         steps = 0;
     }
 
@@ -83,9 +83,7 @@ public class Maze {
     }
 
     public static void main(String[] args) {
-
         (new Robot()).navigate();
-
     }
 }
 
