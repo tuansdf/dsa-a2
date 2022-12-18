@@ -7,7 +7,7 @@ public class Robot {
 
     // The virtual map size for the robot is 2000x2000
     // because the max size is 1000x1000 and robot does not know its position
-    private static final int VIRTUAL_MAP_HALF_LENGTH = 2000;
+    private static final int VIRTUAL_MAP_HALF_LENGTH = 1000;
     private static final int VIRTUAL_MAP_LENGTH = VIRTUAL_MAP_HALF_LENGTH * 2;
 
     private static final String UP = "UP";
@@ -64,6 +64,7 @@ public class Robot {
         String currentResult = "";
 
         while (!currentResult.equals(WIN_SIGNAL)) {
+            // always get the direction from the top of the stack in every loop
             currentBranch = branches.peek();
             if (currentBranch == null) {
                 break;
