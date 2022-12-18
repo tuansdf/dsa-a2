@@ -1,6 +1,6 @@
 package main;
 
-// a branch is a straight line path
+// a one-step path
 public class Branch {
     private String direction;
     private boolean end;

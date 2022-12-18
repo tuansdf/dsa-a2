@@ -3,15 +3,12 @@ package main;
 import java.io.FileWriter;
 import java.util.Arrays;
 
-// Decision choosing branch for DFS:
-// - Default: Up
-// - Horizontal: Right then Left
-// - Vertical: Up then Down
-// The virtual map size for the robot is 1997x1997
 public class Robot {
 
-    private static final int VIRTUAL_MAP_ONE_SIDE = 998;
-    private static final int VIRTUAL_MAP_SIZE = VIRTUAL_MAP_ONE_SIDE * 2 + 1;
+    // The virtual map size for the robot is 2000x2000
+    // because the max size is 1000x1000 and robot does not know its position
+    private static final int VIRTUAL_MAP_HALF_LENGTH = 2000;
+    private static final int VIRTUAL_MAP_LENGTH = VIRTUAL_MAP_HALF_LENGTH * 2;
 
     private static final String UP = "UP";
     private static final String DOWN = "DOWN";
@@ -34,16 +31,16 @@ public class Robot {
 
     public Robot() {
         // initialize the virtual map for robot
-        char[] row = new char[VIRTUAL_MAP_SIZE];
+        char[] row = new char[VIRTUAL_MAP_LENGTH];
         Arrays.fill(row, EMPTY_CELL);
         String rowString = new String(row);
-        virtualMap = new String[VIRTUAL_MAP_SIZE];
+        virtualMap = new String[VIRTUAL_MAP_LENGTH];
         Arrays.fill(virtualMap, rowString);
 
         // assume the robot is in the position (0, 0) in its virtual map,
         // so index 0 + the length of one half to put it at the center of the 2d array
-        virtualCurrentCol = VIRTUAL_MAP_ONE_SIDE;
-        virtualCurrentRow = VIRTUAL_MAP_ONE_SIDE;
+        virtualCurrentCol = VIRTUAL_MAP_HALF_LENGTH;
+        virtualCurrentRow = VIRTUAL_MAP_HALF_LENGTH;
 
         // mark the starting point
         replaceCellAt(virtualCurrentRow, virtualCurrentCol, PATH_CELL);
@@ -76,7 +73,7 @@ public class Robot {
             // if the current branch already branched out earlier,
             // back-track to the previous branch and terminate the current branch
             if (currentBranch.isEnd()) {
-                // backtrack to the previous branch
+                // back-track to the previous branch
                 adapterGo(getOppositeDirection(currentDirection));
                 branches.pop();
                 continue;
@@ -94,20 +91,10 @@ public class Robot {
             if (currentResult.equals(FALSE_SIGNAL)) {
                 branches.pop();
             }
-            // if there is no obstacle, end that branch,
-            // and then create 2 new branches
+            // if there is no obstacle, end that branch
             else {
                 currentBranch.setEnd(true);
-                switch (currentDirection) {
-                    case UP, DOWN -> {
-                        branches.push(new Branch(LEFT));
-                        branches.push(new Branch(RIGHT));
-                    }
-                    case RIGHT, LEFT -> {
-                        branches.push(new Branch(DOWN));
-                        branches.push(new Branch(UP));
-                    }
-                }
+                forkBranch(branches, currentDirection);
             }
         }
 
@@ -118,7 +105,7 @@ public class Robot {
         System.out.println("Time in millis: " + (end - start));
 
         // mark the robot
-        replaceCellAt(VIRTUAL_MAP_ONE_SIDE, VIRTUAL_MAP_ONE_SIDE, 'R');
+        replaceCellAt(VIRTUAL_MAP_HALF_LENGTH, VIRTUAL_MAP_HALF_LENGTH, 'R');
         // mark the gate
         if (currentResult.equals(WIN_SIGNAL)) {
             replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
@@ -127,12 +114,38 @@ public class Robot {
         // write the map into a separate file
         try {
             FileWriter fw = new FileWriter("./resources/virtual-maze.txt");
-            for (int i = 0; i < VIRTUAL_MAP_SIZE; i++) {
+            for (int i = 0; i < VIRTUAL_MAP_LENGTH; i++) {
                 fw.write(virtualMap[i] + "\n");
             }
             fw.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // add three new direction except the opposite to the current direction
+    private void forkBranch(LinkedListStack<Branch> branches, String direction) {
+        switch (direction) {
+            case UP -> {
+                branches.push(new Branch(LEFT));
+                branches.push(new Branch(RIGHT));
+                branches.push(new Branch(UP));
+            }
+            case DOWN -> {
+                branches.push(new Branch(LEFT));
+                branches.push(new Branch(RIGHT));
+                branches.push(new Branch(DOWN));
+            }
+            case LEFT -> {
+                branches.push(new Branch(DOWN));
+                branches.push(new Branch(UP));
+                branches.push(new Branch(LEFT));
+            }
+            case RIGHT -> {
+                branches.push(new Branch(DOWN));
+                branches.push(new Branch(UP));
+                branches.push(new Branch(RIGHT));
+            }
         }
     }
 
@@ -147,6 +160,7 @@ public class Robot {
         String result = maze.go(direction);
 
         if (result.equals(FALSE_SIGNAL)) {
+            // those series of moves are just for marking the wall
             // prepare to mark wall in virtual map
             String virtualResult = virtualGo(direction);
             if (virtualResult.equals(TRUE_SIGNAL)) {
@@ -186,6 +200,7 @@ public class Robot {
 
     // maze.go() but for virtual map only
     private String virtualGo(String direction) {
+        // this method cares about moving the robot, does not matter if it is overriding or not
         String result = virtualCheck(direction, true);
         if (result.equals(TRUE_SIGNAL)) {
             switch (direction) {
@@ -207,6 +222,7 @@ public class Robot {
     }
 
     // mirror of maze.go() for easy checking surrounding on virtual map
+    // isOverride: if the robot can step on its own path or not
     private String virtualCheck(String direction, boolean isOverride) {
         if (!direction.equals(UP) && !direction.equals(DOWN) && !direction.equals(LEFT) && !direction.equals(RIGHT)) {
             // invalid direction

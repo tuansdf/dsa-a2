@@ -40,8 +40,8 @@ public class Maze {
 //        map[4] = "...............";
 
         // robot position
-        robotRow = 10;
-        robotCol = 10;
+        robotRow = 2;
+        robotCol = 2;
         steps = 0;
     }
 
