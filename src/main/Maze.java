@@ -20,24 +20,24 @@ public class Maze {
         map = new String[rows];
 
         // read maze from file
-        int index = 0;
-        try {
-            File file = new File("./resources/maze-30x100.txt");
-            Scanner reader = new Scanner(file);
-            while (reader.hasNextLine()) {
-                String data = reader.nextLine();
-                map[index] = data;
-                index++;
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+//        int index = 0;
+//        try {
+//            File file = new File("./resources/maze-30x100.txt");
+//            Scanner reader = new Scanner(file);
+//            while (reader.hasNextLine()) {
+//                String data = reader.nextLine();
+//                map[index] = data;
+//                index++;
+//            }
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
 
-//        map[0] = "...............";
-//        map[1] = ".        .    .";
-//        map[2] = ".  X     .    .";
-//        map[3] = ".             .";
-//        map[4] = "...............";
+        map[0] = "...............";
+        map[1] = ".        .    .";
+        map[2] = ".  X     .    .";
+        map[3] = ".             .";
+        map[4] = "...............";
 
         // robot position
         robotRow = 2;

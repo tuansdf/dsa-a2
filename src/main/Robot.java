@@ -49,7 +49,7 @@ public class Robot {
     }
 
     public void navigate() {
-        long start = System.currentTimeMillis();
+//        long start = System.currentTimeMillis();
 
         LinkedListStack<Branch> branches = new LinkedListStack<>();
 
@@ -102,26 +102,26 @@ public class Robot {
         // * --- *
         // stats for testing only
         // time taken
-        long end = System.currentTimeMillis();
-        System.out.println("Time in millis: " + (end - start));
-
-        // mark the robot
-        replaceCellAt(VIRTUAL_MAP_HALF_LENGTH, VIRTUAL_MAP_HALF_LENGTH, 'R');
-        // mark the gate
-        if (currentResult.equals(WIN_SIGNAL)) {
-            replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
-        }
-
-        // write the map into a separate file
-        try {
-            FileWriter fw = new FileWriter("./resources/virtual-maze.txt");
-            for (int i = 0; i < VIRTUAL_MAP_LENGTH; i++) {
-                fw.write(virtualMap[i] + "\n");
-            }
-            fw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        long end = System.currentTimeMillis();
+//        System.out.println("Time in millis: " + (end - start));
+//
+//        // mark the robot
+//        replaceCellAt(VIRTUAL_MAP_HALF_LENGTH, VIRTUAL_MAP_HALF_LENGTH, 'R');
+//        // mark the gate
+//        if (currentResult.equals(WIN_SIGNAL)) {
+//            replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
+//        }
+//
+//        // write the map into a separate file
+//        try {
+//            FileWriter fw = new FileWriter("./resources/virtual-maze.txt");
+//            for (int i = 0; i < VIRTUAL_MAP_LENGTH; i++) {
+//                fw.write(virtualMap[i] + "\n");
+//            }
+//            fw.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     // add three new direction except the opposite to the current direction
