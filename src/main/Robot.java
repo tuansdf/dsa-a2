@@ -23,7 +23,7 @@ public class Robot {
     private static final char PATH_CELL = '*';
     private static final char WALL_CELL = '.';
 
-    private final String[] virtualMap;
+    private final char[][] virtualMap;
     private int virtualCurrentCol;
     private int virtualCurrentRow;
 
@@ -31,11 +31,12 @@ public class Robot {
 
     public Robot() {
         // initialize the virtual map for robot
-        char[] row = new char[VIRTUAL_MAP_LENGTH];
-        Arrays.fill(row, EMPTY_CELL);
-        String rowString = new String(row);
-        virtualMap = new String[VIRTUAL_MAP_LENGTH];
-        Arrays.fill(virtualMap, rowString);
+        virtualMap = new char[VIRTUAL_MAP_LENGTH][VIRTUAL_MAP_LENGTH];
+        for (int i = 0; i < VIRTUAL_MAP_LENGTH; i++) {
+            char[] row = new char[VIRTUAL_MAP_LENGTH];
+            Arrays.fill(row, EMPTY_CELL);
+            virtualMap[i] = row;
+        }
 
         // assume the robot is in the position (0, 0) in its virtual map,
         // so index 0 + the length of one half to put it at the center of the 2d array
@@ -49,7 +50,7 @@ public class Robot {
     }
 
     public void navigate() {
-//        long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
         LinkedListStack<Branch> branches = new LinkedListStack<>();
 
@@ -102,26 +103,27 @@ public class Robot {
         // * --- *
         // stats for testing only
         // time taken
-//        long end = System.currentTimeMillis();
-//        System.out.println("Time in millis: " + (end - start));
-//
-//        // mark the robot
-//        replaceCellAt(VIRTUAL_MAP_HALF_LENGTH, VIRTUAL_MAP_HALF_LENGTH, 'R');
-//        // mark the gate
-//        if (currentResult.equals(WIN_SIGNAL)) {
-//            replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
-//        }
-//
-//        // write the map into a separate file
-//        try {
-//            FileWriter fw = new FileWriter("./resources/virtual-maze.txt");
-//            for (int i = 0; i < VIRTUAL_MAP_LENGTH; i++) {
-//                fw.write(virtualMap[i] + "\n");
-//            }
-//            fw.close();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        long end = System.currentTimeMillis();
+        System.out.println("Time in millis: " + (end - start));
+
+        // mark the robot
+        replaceCellAt(VIRTUAL_MAP_HALF_LENGTH, VIRTUAL_MAP_HALF_LENGTH, 'R');
+        // mark the gate
+        if (currentResult.equals(WIN_SIGNAL)) {
+            replaceCellAt(virtualCurrentRow, virtualCurrentCol, 'G');
+        }
+
+        // write the map into a separate file
+        try {
+            FileWriter fw = new FileWriter("./resources/virtual-maze.txt");
+            for (int i = 0; i < VIRTUAL_MAP_LENGTH; i++) {
+                String hello = new String(virtualMap[i]);
+                fw.write(hello + "\n");
+            }
+            fw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // add three new direction except the opposite to the current direction
@@ -151,9 +153,7 @@ public class Robot {
     }
 
     private void replaceCellAt(int row, int col, char newChar) {
-        StringBuilder sb = new StringBuilder(virtualMap[row]);
-        sb.setCharAt(col, newChar);
-        virtualMap[row] = sb.toString();
+        virtualMap[row][col] = newChar;
     }
 
     // run both go at the same time
@@ -248,7 +248,7 @@ public class Robot {
             }
         }
 
-        switch (virtualMap[currentRow].charAt(currentCol)) {
+        switch (virtualMap[currentRow][currentCol]) {
             case WALL_CELL -> {
                 return FALSE_SIGNAL;
             }
